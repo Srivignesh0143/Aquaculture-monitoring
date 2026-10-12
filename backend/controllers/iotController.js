@@ -9,18 +9,18 @@ const { markDeviceOnline } = require('../services/deviceService')
 // the verifyDevice middleware after checking deviceId + x-device-api-key.
 async function receiveSensorData(req, res, next) {
   try {
-    const { temperature, ph, dissolvedOxygen, turbidity, timestamp } = req.body
+    const { temperature, ph, waterLevel, turbidity, timestamp } = req.body
     const device = req.device
 
-    if ([temperature, ph, dissolvedOxygen, turbidity].some((v) => typeof v !== 'number')) {
-      return res.status(400).json({ message: 'temperature, ph, dissolvedOxygen and turbidity must all be numbers' })
+    if ([temperature, ph, waterLevel, turbidity].some((v) => typeof v !== 'number')) {
+      return res.status(400).json({ message: 'temperature, ph, waterLevel and turbidity must all be numbers' })
     }
 
     const reading = await SensorReading.create({
       deviceId: device.deviceId,
       temperature,
       ph,
-      dissolvedOxygen,
+      waterLevel,
       turbidity,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
     })
@@ -49,13 +49,13 @@ async function receiveBatch(req, res, next) {
     const invalidReading = readings.find(
       (r) =>
         !r ||
-        ['temperature', 'ph', 'dissolvedOxygen', 'turbidity'].some(
+        ['temperature', 'ph', 'waterLevel', 'turbidity'].some(
           (field) => typeof r[field] !== 'number' || !Number.isFinite(r[field])
         )
     )
     if (invalidReading) {
       return res.status(400).json({
-        message: 'Each reading must contain finite temperature, ph, dissolvedOxygen and turbidity numbers',
+        message: 'Each reading must contain finite temperature, ph, waterLevel and turbidity numbers',
       })
     }
 
@@ -63,7 +63,7 @@ async function receiveBatch(req, res, next) {
       deviceId: device.deviceId,
       temperature: r.temperature,
       ph: r.ph,
-      dissolvedOxygen: r.dissolvedOxygen,
+      waterLevel: r.waterLevel,
       turbidity: r.turbidity,
       timestamp: r.timestamp ? new Date(r.timestamp) : new Date(),
     }))

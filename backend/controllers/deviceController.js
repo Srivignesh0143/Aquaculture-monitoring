@@ -29,6 +29,16 @@ async function createCommand(req, res, next) {
 
     if (command === 'aerator') device.aerator = value
     if (command === 'controlMode') device.controlMode = value
+    if (command === 'aeratorSchedule') {
+      if (!value || !/^\d{2}:\d{2}$/.test(value.time) || !Number.isInteger(Number(value.duration)) || Number(value.duration) < 1 || Number(value.duration) > 3600) {
+        return res.status(400).json({ message: 'Aerator schedule requires a valid time and duration between 1 and 3600 seconds' })
+      }
+      device.aeratorSchedule = {
+        time: value.time,
+        duration: Number(value.duration),
+        enabled: value.enabled !== false,
+      }
+    }
     await device.save()
 
     const savedCommand = await DeviceCommand.create({

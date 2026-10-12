@@ -12,7 +12,7 @@ const RANGES = [
 const PARAMS = [
   { key: 'temperature', label: 'Temperature', unit: '°C', color: '#0e94e3' },
   { key: 'ph', label: 'pH', unit: '', color: '#16a34a' },
-  { key: 'dissolvedOxygen', label: 'Dissolved Oxygen', unit: 'mg/L', color: '#0275c1' },
+  { key: 'waterLevel', label: 'Water Level', unit: 'cm', color: '#0275c1' },
   { key: 'turbidity', label: 'Turbidity', unit: 'NTU', color: '#e69500' },
 ]
 

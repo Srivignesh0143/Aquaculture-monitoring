@@ -50,7 +50,7 @@ export default function Login() {
             Real-time pond intelligence,<br />in the palm of your hand.
           </h2>
           <p className="text-sky-100/80 max-w-md">
-            Monitor water temperature, pH, dissolved oxygen and turbidity, and control your
+            Monitor water temperature, pH, water level and turbidity, and control your
             aerators and feeders remotely from anywhere.
           </p>
         </div>

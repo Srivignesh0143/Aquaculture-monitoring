@@ -26,14 +26,14 @@ async function evaluateReading(device, reading) {
   const t = device.thresholds
   const created = []
 
-  if (reading.dissolvedOxygen < t.dissolvedOxygen.warnMin) {
+  if (reading.waterLevel < t.waterLevel.warnMin) {
     const alert = await createAlertIfNeeded({
       deviceId: device.deviceId,
-      type: 'LOW_DO',
+      type: 'LOW_WATER_LEVEL',
       severity: 'CRITICAL',
-      message: `DO dropped below ${t.dissolvedOxygen.warnMin} mg/L.`,
-      value: reading.dissolvedOxygen,
-      threshold: t.dissolvedOxygen.warnMin,
+      message: `Water level dropped below ${t.waterLevel.warnMin} cm.`,
+      value: reading.waterLevel,
+      threshold: t.waterLevel.warnMin,
     })
     if (alert) created.push(alert)
   }

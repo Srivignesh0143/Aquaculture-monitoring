@@ -126,9 +126,9 @@ export default function Settings() {
           </div>
 
           <div>
-            <p className="font-medium text-navy-900 mb-2">Dissolved Oxygen</p>
-            <label className="label-text">Minimum (mg/L)</label>
-            <input type="number" step="0.1" className="input-field max-w-xs" value={thresholds.dissolvedOxygen.min} onChange={(e) => setThresholds({ ...thresholds, dissolvedOxygen: { ...thresholds.dissolvedOxygen, min: Number(e.target.value) } })} />
+            <p className="font-medium text-navy-900 mb-2">Water Level</p>
+            <label className="label-text">Minimum (cm)</label>
+            <input type="number" step="0.1" className="input-field max-w-xs" value={thresholds.waterLevel.min} onChange={(e) => setThresholds({ ...thresholds, waterLevel: { ...thresholds.waterLevel, min: Number(e.target.value) } })} />
           </div>
 
           <div>
@@ -146,7 +146,7 @@ export default function Settings() {
       {tab === 'Notifications' && notifications && (
         <div className="card p-6 max-w-lg space-y-1">
           {[
-            { key: 'lowDO', label: 'Low Dissolved Oxygen alerts' },
+            { key: 'lowWaterLevel', label: 'Low Water Level alerts' },
             { key: 'highTemperature', label: 'High Temperature alerts' },
             { key: 'ph', label: 'pH alerts' },
             { key: 'turbidity', label: 'Turbidity alerts' },

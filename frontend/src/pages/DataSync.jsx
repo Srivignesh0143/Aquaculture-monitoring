@@ -84,7 +84,7 @@ export default function DataSync() {
     toast.success('Preparing sensor data CSV...')
     
     // Demo CSV
-    const csv = `Timestamp,Temperature,pH,Dissolved Oxygen,Turbidity
+    const csv = `Timestamp,Temperature,pH,Water Level (cm),Turbidity
 27-09-2026 18:30,28.4,7.35,6.8,3.2
 27-09-2026 18:31,28.5,7.36,6.7,3.3
 27-09-2026 18:32,28.5,7.34,6.7,3.4

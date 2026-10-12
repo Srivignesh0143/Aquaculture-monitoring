@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const alertSchema = new mongoose.Schema(
   {
     deviceId: { type: String, required: true, index: true },
-    type: { type: String, required: true }, // LOW_DO | HIGH_TEMPERATURE | ABNORMAL_PH | HIGH_TURBIDITY | DEVICE_OFFLINE
+    type: { type: String, required: true }, // LOW_WATER_LEVEL | HIGH_TEMPERATURE | ABNORMAL_PH | HIGH_TURBIDITY | DEVICE_OFFLINE
     severity: { type: String, enum: ['INFO', 'WARNING', 'CRITICAL'], required: true },
     message: { type: String, required: true },
     value: { type: Number },

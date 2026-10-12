@@ -1,7 +1,7 @@
 # Automated Aquaculture Monitoring System
 
 A full-stack IoT web dashboard for monitoring aquaculture pond/tank conditions
-(water temperature, pH, dissolved oxygen, turbidity), with remote control of
+(water temperature, pH, water level, turbidity), with remote control of
 an aerator and automatic feeder, alerting, and historical analytics.
 
 ```
@@ -71,7 +71,7 @@ separate mechanism from user JWTs (see `backend/middleware/deviceAuth.js`).
     "deviceId": "POND-001",
     "temperature": 28.4,
     "ph": 7.4,
-    "dissolvedOxygen": 6.8,
+    "waterLevel": 6.8,
     "turbidity": 3.2,
     "timestamp": "2026-08-23T15:20:00Z"
   }

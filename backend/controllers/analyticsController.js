@@ -11,9 +11,9 @@ function statusScore(param, value, t) {
       if (value < t.ph.warnMin || value > t.ph.warnMax) return 0.15
       if (value < t.ph.min || value > t.ph.max) return 0.55
       return 1
-    case 'dissolvedOxygen':
-      if (value < t.dissolvedOxygen.warnMin) return 0.15
-      if (value < t.dissolvedOxygen.min) return 0.55
+    case 'waterLevel':
+      if (value < t.waterLevel.warnMin) return 0.15
+      if (value < t.waterLevel.min) return 0.55
       return 1
     case 'turbidity':
       if (value > t.turbidity.warnMax) return 0.15
@@ -34,13 +34,13 @@ async function getAnalytics(req, res, next) {
       return res.status(404).json({ message: 'Sensor data unavailable' })
     }
 
-    const weights = { temperature: 25, ph: 25, dissolvedOxygen: 30, turbidity: 20 }
+    const weights = { temperature: 25, ph: 25, waterLevel: 30, turbidity: 20 }
     const t = device.thresholds
 
     const score =
       statusScore('temperature', latest.temperature, t) * weights.temperature +
       statusScore('ph', latest.ph, t) * weights.ph +
-      statusScore('dissolvedOxygen', latest.dissolvedOxygen, t) * weights.dissolvedOxygen +
+      statusScore('waterLevel', latest.waterLevel, t) * weights.waterLevel +
       statusScore('turbidity', latest.turbidity, t) * weights.turbidity
 
     const healthScore = Math.round(score)

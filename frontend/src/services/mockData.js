@@ -8,12 +8,12 @@ const STORAGE_KEY = 'aq_mock_state_v1'
 const defaultThresholds = {
   temperature: { min: 24, max: 30, warnMax: 32 },
   ph: { min: 6.5, max: 8.5, warnMin: 6.0, warnMax: 9.0 },
-  dissolvedOxygen: { min: 5, warnMin: 3 },
+  waterLevel: { min: 5, warnMin: 3 },
   turbidity: { max: 5, warnMax: 10 },
 }
 
 const defaultNotificationSettings = {
-  lowDO: true,
+  lowWaterLevel: true,
   highTemperature: true,
   ph: true,
   turbidity: true,
@@ -23,7 +23,27 @@ const defaultNotificationSettings = {
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const state = JSON.parse(raw)
+      state.history = state.history?.map((reading) => {
+        if (reading.waterLevel === undefined && reading.dissolvedOxygen !== undefined) {
+          const { dissolvedOxygen, ...rest } = reading
+          return { ...rest, waterLevel: dissolvedOxygen }
+        }
+        return reading
+      })
+      if (state.thresholds?.waterLevel === undefined && state.thresholds?.dissolvedOxygen !== undefined) {
+        state.thresholds.waterLevel = state.thresholds.dissolvedOxygen
+        delete state.thresholds.dissolvedOxygen
+      }
+      if (state.notificationSettings?.lowWaterLevel === undefined && state.notificationSettings?.lowDO !== undefined) {
+        state.notificationSettings.lowWaterLevel = state.notificationSettings.lowDO
+        delete state.notificationSettings.lowDO
+      }
+      if (!Array.isArray(state.history)) state.history = []
+      saveState(state)
+      return state
+    }
   } catch (e) {
     /* ignore corrupt state */
   }
@@ -46,18 +66,18 @@ function genHistory(hours, intervalMinutes, base) {
   const count = Math.floor((hours * 60) / intervalMinutes)
   let temperature = base.temperature
   let ph = base.ph
-  let dissolvedOxygen = base.dissolvedOxygen
+  let waterLevel = base.waterLevel
   let turbidity = base.turbidity
   for (let i = count; i >= 0; i--) {
     temperature = randomWalk(temperature, 0.4, 22, 33)
     ph = randomWalk(ph, 0.08, 5.8, 9.2)
-    dissolvedOxygen = randomWalk(dissolvedOxygen, 0.25, 2, 9)
+    waterLevel = randomWalk(waterLevel, 0.25, 2, 9)
     turbidity = randomWalk(turbidity, 0.3, 0.5, 12)
     points.push({
       timestamp: new Date(now - i * intervalMinutes * 60 * 1000).toISOString(),
       temperature,
       ph,
-      dissolvedOxygen,
+      waterLevel,
       turbidity,
     })
   }
@@ -68,7 +88,7 @@ function seedState() {
   const history = genHistory(24 * 7, 15, {
     temperature: 28.4,
     ph: 7.4,
-    dissolvedOxygen: 6.8,
+    waterLevel: 6.8,
     turbidity: 3.2,
   })
 
@@ -99,6 +119,7 @@ function seedState() {
       lastWriteAt: new Date().toISOString(),
       controlMode: 'automatic', // 'manual' | 'automatic'
       aerator: 'off',
+      aeratorSchedule: { time: '06:00', duration: 30, enabled: true },
       feeder: {
         status: 'ready',
         lastFeeding: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
@@ -116,9 +137,9 @@ function seedState() {
     alerts: [
       {
         id: 'a1',
-        type: 'LOW_DO',
+        type: 'LOW_WATER_LEVEL',
         severity: 'CRITICAL',
-        message: 'DO dropped below 3 mg/L.',
+        message: 'Water level dropped below 3 cm.',
         value: 2.7,
         threshold: 3.0,
         read: false,
@@ -203,7 +224,7 @@ export function statusFor(param, value) {
       if (value < t.warnMin || value > t.warnMax) return 'critical'
       if (value < t.min || value > t.max) return 'warning'
       return 'good'
-    case 'dissolvedOxygen':
+    case 'waterLevel':
       if (value < t.warnMin) return 'critical'
       if (value < t.min) return 'warning'
       return 'good'
@@ -224,7 +245,7 @@ export async function getLatestReading() {
     timestamp: new Date().toISOString(),
     temperature: randomWalk(last.temperature, 0.3, 22, 33),
     ph: randomWalk(last.ph, 0.05, 5.8, 9.2),
-    dissolvedOxygen: randomWalk(last.dissolvedOxygen, 0.2, 2, 9),
+    waterLevel: randomWalk(last.waterLevel, 0.2, 2, 9),
     turbidity: randomWalk(last.turbidity, 0.25, 0.5, 12),
   }
   state.history.push(next)
@@ -244,7 +265,7 @@ export async function getHistory(range = '24h') {
     '7d': 1000 * 60 * 60 * 24 * 7,
     '30d': 1000 * 60 * 60 * 24 * 30,
   }[range] || 1000 * 60 * 60 * 24
-  return state.history.filter((p) => now - new Date(p.timestamp).getTime() <= rangeMs)
+  return (Array.isArray(state.history) ? state.history : []).filter((p) => now - new Date(p.timestamp).getTime() <= rangeMs)
 }
 
 // ---- Device / Actuators ----
@@ -258,6 +279,7 @@ export async function sendDeviceCommand(command, value) {
   const state = getState()
   if (command === 'aerator') state.device.aerator = value
   if (command === 'controlMode') state.device.controlMode = value
+  if (command === 'aeratorSchedule') state.device.aeratorSchedule = value
   if (command === 'syncTime') state.device.rtc = new Date().toISOString()
   state.commands.unshift({
     id: 'c' + Date.now(),
@@ -373,7 +395,7 @@ export async function getAnalytics() {
   await delay(300)
   const state = getState()
   const last = state.history[state.history.length - 1]
-  const weights = { temperature: 25, ph: 25, dissolvedOxygen: 30, turbidity: 20 }
+  const weights = { temperature: 25, ph: 25, waterLevel: 30, turbidity: 20 }
   const scoreFor = (param, value) => {
     const s = statusFor(param, value)
     if (s === 'good') return 1
@@ -383,7 +405,7 @@ export async function getAnalytics() {
   const score =
     scoreFor('temperature', last.temperature) * weights.temperature +
     scoreFor('ph', last.ph) * weights.ph +
-    scoreFor('dissolvedOxygen', last.dissolvedOxygen) * weights.dissolvedOxygen +
+    scoreFor('waterLevel', last.waterLevel) * weights.waterLevel +
     scoreFor('turbidity', last.turbidity) * weights.turbidity
   const healthScore = Math.round(score)
   let healthLabel = 'Critical'

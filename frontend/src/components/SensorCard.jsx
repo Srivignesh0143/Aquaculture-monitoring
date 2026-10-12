@@ -4,7 +4,7 @@ import StatusBadge from './StatusBadge.jsx'
 const STATUS_LABELS = {
   temperature: { good: 'Normal', warning: 'Warning', critical: 'Critical' },
   ph: { good: 'Optimal', warning: 'Warning', critical: 'Critical' },
-  dissolvedOxygen: { good: 'Healthy', warning: 'Warning', critical: 'Critical' },
+  waterLevel: { good: 'Healthy', warning: 'Warning', critical: 'Critical' },
   turbidity: { good: 'Normal', warning: 'Warning', critical: 'Critical' },
 }
 

@@ -11,9 +11,9 @@ const DUMMY_ALERTS = [
   {
     id: 'dummy-1',
     severity: 'CRITICAL',
-    title: 'Low Dissolved Oxygen',
+    title: 'Low Water Level',
     message:
-      'Dissolved oxygen dropped to 3.2 mg/L in Pond 01. Aerator activated automatically.',
+      'Water level dropped to 3.2 cm in Pond 01. Aerator activated automatically.',
     createdAt: '2026-09-26T20:35:00+05:30',
     read: false,
   },
@@ -65,9 +65,9 @@ const DUMMY_ALERTS = [
   {
     id: 'dummy-7',
     severity: 'CRITICAL',
-    title: 'Low Dissolved Oxygen',
+    title: 'Low Water Level',
     message:
-      'Dissolved oxygen reached 2.8 mg/L. Emergency aeration was activated.',
+      'Water level reached 2.8 cm. Emergency aeration was activated.',
     createdAt: '2026-09-26T16:20:00+05:30',
     read: true,
   },

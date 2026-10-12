@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Thermometer, Droplets, Wind, Waves as WavesIcon, Wifi, WifiOff } from 'lucide-react'
+import { Thermometer, Droplets, Waves as WavesIcon, Wifi, WifiOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { sensorService } from '../services/sensorService.js'
 import SensorCard from '../components/SensorCard.jsx'
@@ -106,12 +106,12 @@ export default function Dashboard() {
           updatedAt="Just now"
         />
         <SensorCard
-          icon={Wind}
-          title="Dissolved Oxygen"
-          value={reading.dissolvedOxygen.toFixed(1)}
-          unit="mg/L"
-          param="dissolvedOxygen"
-          status={sensorService.statusFor('dissolvedOxygen', reading.dissolvedOxygen)}
+          icon={WavesIcon}
+          title="Water Level"
+          value={reading.waterLevel.toFixed(1)}
+          unit="cm"
+          param="waterLevel"
+          status={sensorService.statusFor('waterLevel', reading.waterLevel)}
           updatedAt="Just now"
         />
         <SensorCard

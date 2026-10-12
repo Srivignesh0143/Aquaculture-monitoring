@@ -8,11 +8,14 @@ export default function DeviceControl() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [confirm, setConfirm] = useState(null) // { action, label }
+  const [schedule, setSchedule] = useState({ time: '06:00', duration: 30, enabled: true })
 
   const load = async () => {
     setLoading(true)
     try {
-      setDevice(await sensorService.getDevice())
+      const nextDevice = await sensorService.getDevice()
+      setDevice(nextDevice)
+      setSchedule(nextDevice.aeratorSchedule || { time: '06:00', duration: 30, enabled: true })
     } finally {
       setLoading(false)
     }
@@ -53,6 +56,29 @@ export default function DeviceControl() {
       load()
     } catch (err) {
       toast.error(err.message || 'Command failed')
+    }
+  }
+
+  const saveSchedule = async (event) => {
+    event.preventDefault()
+    if (!schedule.time || schedule.duration < 1 || schedule.duration > 3600) {
+      toast.error('Set a valid time and duration between 1 and 3600 seconds')
+      return
+    }
+
+    setBusy(true)
+    try {
+      await sensorService.sendCommand('aeratorSchedule', {
+        time: schedule.time,
+        duration: Number(schedule.duration),
+        enabled: schedule.enabled,
+      })
+      toast.success('Aerator schedule saved')
+      await load()
+    } catch (err) {
+      toast.error(err.message || 'Unable to save aerator schedule')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -109,8 +135,47 @@ export default function DeviceControl() {
               </button>
             </div>
             <p className="text-xs text-navy-800/40 mt-2">
-              Automatic mode turns the aerator ON when dissolved oxygen falls below the configured minimum, and OFF once it recovers.
+              Automatic mode runs the aerator only at the scheduled time and for the scheduled duration.
             </p>
+            <form onSubmit={saveSchedule} className="mt-4 pt-4 border-t border-sky-100 space-y-3">
+              <p className="text-sm font-medium text-navy-800">Automatic schedule</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs text-navy-800/60">
+                  Start time
+                  <input
+                    type="time"
+                    value={schedule.time}
+                    onChange={(event) => setSchedule({ ...schedule, time: event.target.value })}
+                    className="input-field mt-1"
+                    disabled={busy}
+                  />
+                </label>
+                <label className="text-xs text-navy-800/60">
+                  Duration (seconds)
+                  <input
+                    type="number"
+                    min="1"
+                    max="3600"
+                    value={schedule.duration}
+                    onChange={(event) => setSchedule({ ...schedule, duration: Number(event.target.value) })}
+                    className="input-field mt-1"
+                    disabled={busy}
+                  />
+                </label>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-navy-800/70">
+                <input
+                  type="checkbox"
+                  checked={schedule.enabled}
+                  onChange={(event) => setSchedule({ ...schedule, enabled: event.target.checked })}
+                  disabled={busy}
+                />
+                Enable daily schedule
+              </label>
+              <button type="submit" disabled={busy} className="btn-secondary">
+                {busy ? 'Saving...' : 'Save Schedule'}
+              </button>
+            </form>
           </div>
         </div>
 

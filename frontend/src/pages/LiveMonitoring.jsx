@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Thermometer, Droplets, Wind, Waves as WavesIcon, Wifi, WifiOff, RadioTower } from 'lucide-react'
+import { Thermometer, Droplets, Waves as WavesIcon, Wifi, WifiOff, RadioTower } from 'lucide-react'
 import { sensorService } from '../services/sensorService.js'
 import SensorCard from '../components/SensorCard.jsx'
 
@@ -47,7 +47,7 @@ export default function LiveMonitoring() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SensorCard icon={Thermometer} title="Temperature" value={reading.temperature.toFixed(1)} unit="°C" param="temperature" status={sensorService.statusFor('temperature', reading.temperature)} updatedAt="live" />
         <SensorCard icon={Droplets} title="pH" value={reading.ph.toFixed(1)} param="ph" status={sensorService.statusFor('ph', reading.ph)} updatedAt="live" />
-        <SensorCard icon={Wind} title="Dissolved Oxygen" value={reading.dissolvedOxygen.toFixed(1)} unit="mg/L" param="dissolvedOxygen" status={sensorService.statusFor('dissolvedOxygen', reading.dissolvedOxygen)} updatedAt="live" />
+        <SensorCard icon={WavesIcon} title="Water Level" value={reading.waterLevel.toFixed(1)} unit="cm" param="waterLevel" status={sensorService.statusFor('waterLevel', reading.waterLevel)} updatedAt="live" />
         <SensorCard icon={WavesIcon} title="Turbidity" value={reading.turbidity.toFixed(1)} unit="NTU" param="turbidity" status={sensorService.statusFor('turbidity', reading.turbidity)} updatedAt="live" />
       </div>
 
