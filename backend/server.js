@@ -1,54 +1,118 @@
-require('dotenv').config()
-const express = require('express')
-const cors = require('cors')
-const rateLimit = require('express-rate-limit')
-const connectDB = require('./config/db')
-const { notFound, errorHandler } = require('./middleware/errorMiddleware')
-const { checkOfflineDevices } = require('./services/deviceService')
+require('dotenv').config();
 
-const authRoutes = require('./routes/authRoutes')
-const sensorRoutes = require('./routes/sensorRoutes')
-const deviceRoutes = require('./routes/deviceRoutes')
-const feedingRoutes = require('./routes/feedingRoutes')
-const alertRoutes = require('./routes/alertRoutes')
-const analyticsRoutes = require('./routes/analyticsRoutes')
-const settingsRoutes = require('./routes/settingsRoutes')
-const iotRoutes = require('./routes/iotRoutes')
+const express = require('express');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
-const app = express()
+const connectDB = require('./config/db');
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', credentials: true }))
-app.use(express.json())
+const {
+  notFound,
+  errorHandler,
+} = require('./middleware/errorMiddleware');
 
-// General API rate limiting. IoT ingest is intentionally allowed a higher
-// ceiling since a device may report every few seconds.
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 })
-const iotLimiter = rateLimit({ windowMs: 60 * 1000, max: 120 })
-app.use('/api/auth', apiLimiter)
-app.use('/api/iot', iotLimiter)
+const {
+  checkOfflineDevices,
+} = require('./services/deviceService');
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
+const {
+  startFeedingScheduler,
+} = require('./services/feedingScheduler');
 
-app.use('/api/auth', authRoutes)
-app.use('/api/sensors', sensorRoutes)
-app.use('/api/devices', deviceRoutes)
-app.use('/api/feeding', feedingRoutes)
-app.use('/api/alerts', alertRoutes)
-app.use('/api/analytics', analyticsRoutes)
-app.use('/api/settings', settingsRoutes)
-app.use('/api/iot', iotRoutes)
+const authRoutes = require('./routes/authRoutes');
+const sensorRoutes = require('./routes/sensorRoutes');
+const deviceRoutes = require('./routes/deviceRoutes');
+const feedingRoutes = require('./routes/feedingRoutes');
+const alertRoutes = require('./routes/alertRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const iotRoutes = require('./routes/iotRoutes');
 
-app.use(notFound)
-app.use(errorHandler)
+const app = express();
 
-const PORT = process.env.PORT || 5000
+const allowedOrigins = (
+  process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+)
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow tools such as curl and Postman.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-  // Periodically mark devices offline if they've gone quiet, and raise
-  // DEVICE_OFFLINE alerts (see services/deviceService.js).
-  setInterval(() => {
-    checkOfflineDevices().catch((err) => console.error('Offline check failed:', err.message))
-  }, 60 * 1000)
-})
+      return callback(
+        new Error('Origin is not allowed by CORS')
+      );
+    },
+    credentials: true,
+  })
+);
+
+app.use(express.json());
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+});
+
+const iotLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+});
+
+app.use('/api/auth', apiLimiter);
+app.use('/api/iot', iotLimiter);
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    time: new Date().toISOString(),
+  });
+});
+
+// Existing routes
+app.use('/api/auth', authRoutes);
+app.use('/api/sensors', sensorRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/feeding', feedingRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/iot', iotRoutes);
+
+// Error handlers
+app.use(notFound);
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+
+    // New: start automatic feeding scheduling.
+    startFeedingScheduler();
+
+    // Existing: check offline devices.
+    setInterval(() => {
+      checkOfflineDevices().catch((err) => {
+        console.error(
+          'Offline device check failed:',
+          err.message
+        );
+      });
+    }, 60 * 1000);
+  })
+  .catch((err) => {
+    console.error('Database connection failed:', err.message);
+    process.exit(1);
+  });
